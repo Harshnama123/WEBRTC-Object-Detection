@@ -1,8 +1,12 @@
 # WebRTC Real-Time Object Detection
 
-A modern web application that performs real-time object detection on video streams from mobile devices using WebRTC and TensorFlow.js.
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)](https://nodejs.org/)
+[![Socket.IO](https://img.shields.io/badge/socket.io-v4.7.2-blue)](https://socket.io/)
 
-## 🌟 Overview
+A production-ready application for real-time object detection using WebRTC and TensorFlow.js, designed for high-performance video processing and analysis.
+
+## Overview
 
 This project enables real-time object detection by streaming video from a phone's camera to a browser using WebRTC. The system can operate in two modes:
 - **WASM Mode** (Default): Object detection runs in the browser using TensorFlow.js
@@ -82,23 +86,97 @@ webrtc-detection/
 
 ## 🔧 Configuration
 
-### Changing Detection Mode
-- Default mode is WASM (browser-side detection)
-- To use server mode, set environment variable:
+### Configuration Options
+
+#### Detection Modes
+
+1. **WASM Mode** (Default)
+   ```bash
+   # Start server in WASM mode
+   npm start
+   ```
+   - Browser-side detection using TensorFlow.js
+   - Lower latency, reduced server load
+   - Suitable for most use cases
+
+2. **Server Mode**
+   ```bash
+   # Start server in backend processing mode
+   DETECTION_MODE=server npm start
+   ```
+   - Server-side detection processing
+   - Higher accuracy potential
+   - Suitable for powerful backend servers
+
+#### Environment Variables
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Server port number | 3000 |
+| `DETECTION_MODE` | Processing mode (wasm/server) | wasm |
+| `NODE_ENV` | Environment (development/production) | development |
+
+### Performance Benchmarking
+
+The project includes comprehensive benchmarking tools to measure system performance across different modes and configurations.
+
+#### Available Benchmark Commands
+
 ```bash
-export DETECTION_MODE=server
+# Run default benchmark (WASM mode, 30 seconds)
+npm run benchmark
+
+# Specific mode benchmarks
+npm run benchmark-wasm     # Browser-side detection
+npm run benchmark-server   # Server-side detection
+
+# Quick test (5 seconds, WASM mode)
+npm run test
+```
+
+#### Benchmark Parameters
+- **Duration**: Default 30 seconds (configurable)
+- **Modes**: WASM (browser-side) or Server (backend processing)
+- **Metrics Collected**:
+  - End-to-end latency (median and P95)
+  - Server processing time
+  - Frame processing rate (FPS)
+  - Total frames processed
+  - Network bandwidth utilization
+  - Detection accuracy and confidence scores
+
+#### Running Benchmarks
+
+1. Start the server:
+```bash
 npm start
 ```
 
-### Running Benchmarks
+2. In a new terminal, run the benchmark:
 ```bash
 npm run benchmark
 ```
-This will generate performance metrics including:
-- End-to-end latency
-- Server processing time
-- FPS
-- Bandwidth usage
+
+3. View results in the generated `metrics.json` file:
+```json
+{
+  "mode": "wasm",
+  "test_duration_seconds": 30,
+  "median_e2e_latency": 150,
+  "p95_e2e_latency": 250,
+  "median_server_latency": 50,
+  "processed_fps": 12.5,
+  "total_frames": 375,
+  "uplink_kbps": 1500,
+  "downlink_kbps": 500,
+  "timestamp": "2025-08-21T10:00:00.000Z"
+}
+```
+
+#### Interpreting Results
+- **E2E Latency**: Time from frame capture to detection display
+- **Server Latency**: Processing time on server (server mode only)
+- **FPS**: Frames processed per second
+- **Bandwidth**: Network usage for video streaming
 
 ## 📝 Technical Details
 
@@ -122,15 +200,47 @@ This project is licensed under the MIT License.
 
 ## ❓ Troubleshooting
 
-### Common Issues
-1. **Camera not working:**
-   - Ensure camera permissions are granted
-   - Try refreshing the page
+### Troubleshooting Guide
 
-2. **Connection fails:**
-   - Check if both devices are on same network
-   - Try using ngrok for remote connections
+#### Connection Issues
+1. **WebRTC Connection Fails**
+   - Verify both devices are on the same network
+   - Check browser compatibility (Chrome recommended)
+   - Ensure proper STUN/TURN server configuration
+   - Use ngrok for testing across networks
 
-3. **Poor performance:**
-   - Try WASM mode for faster processing
-   - Ensure good network connectivity
+2. **Camera Access Problems**
+   - Grant camera permissions in browser settings
+   - Verify camera works in other applications
+   - Try a different browser or device
+   - Check for conflicting applications using the camera
+
+3. **Performance Issues**
+   - Monitor CPU usage and network bandwidth
+   - Check benchmark results for bottlenecks
+   - Consider switching detection modes
+   - Optimize video resolution and frame rate
+
+#### Benchmark Troubleshooting
+1. **Benchmark Script Fails**
+   ```bash
+   # Verify Node.js version
+   node --version  # Should be ≥ 14.0.0
+
+   # Check dependencies
+   npm install
+
+   # Run with debug output
+   DEBUG=* npm run benchmark
+   ```
+
+2. **Error Messages**
+   - `Error: ENOENT`: Verify file paths and permissions
+   - `Socket connection failed`: Check server status
+   - `WebRTC negotiation failed`: Verify network connectivity
+
+3. **Invalid Metrics**
+   - Ensure server is running before benchmark
+   - Check for network interference
+   - Verify browser console for errors
+   - Monitor system resources during test
