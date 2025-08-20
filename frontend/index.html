@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Object Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .video-container {
+            position: relative;
+            display: inline-block;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        #localVideo, #remoteVideo {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            display: block;
+        }
+        
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .metrics {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .metric-item {
+            display: inline-block;
+            margin-right: 30px;
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .debug-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Real-time WebRTC Object Detection</h1>
+        
+        <div id="qr-code"></div>
+        
+        <div class="status loading">
+            📡 Initializing connection...
+        </div>
+        
+        <div class="video-container">
+            <video id="localVideo" autoplay muted playsinline style="display: none;"></video>
+            <video id="remoteVideo" autoplay muted playsinline 
+                   style="width: 100%; max-width: 640px; height: auto; background: #222;"></video>
+            <canvas id="overlay"></canvas>
+        </div>
+        
+        <div class="debug-info">
+            <strong>Debug Info:</strong> If video doesn't appear, check browser console (F12) for errors.
+            Video should show your phone's camera stream with colored bounding boxes around detected objects.
+        </div>
+        
+        <div class="metrics">
+            <h3>📊 Live Metrics</h3>
+            <div class="metric-item">FPS: <span id="fps">0</span></div>
+            <div class="metric-item">Frames: <span id="frame-count">0</span></div>
+            <div class="metric-item">Detections: <span id="detections-count">0</span></div>
+            <div class="metric-item">Inference: <span id="latency">0</span>ms</div>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 10px;">
+            <h4>🔧 Instructions:</h4>
+            <ol>
+                <li><strong>Connect Phone:</strong> Open the URL shown above on your phone's browser</li>
+                <li><strong>Allow Camera:</strong> Grant camera permissions when prompted</li>
+                <li><strong>See Results:</strong> Video should appear above with colored bounding boxes</li>
+                <li><strong>Test Objects:</strong> Point camera at people, bottles, phones, laptops, etc.</li>
+            </ol>
+            
+            <div style="margin-top: 15px; padding: 10px; background: #e8f4f8; border-radius: 5px;">
+                <strong>Troubleshooting:</strong>
+                <ul style="margin: 5px 0; padding-left: 20px;">
+                    <li>If no video appears, refresh both phone and laptop</li>
+                    <li>Check browser console (F12) for connection errors</li>
+                    <li>Make sure both devices are on same WiFi network</li>
+                    <li>Try clicking on the video area to force play</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@latest"></script>
+    <script src="client.js"></script>
+</body>
+</html>
