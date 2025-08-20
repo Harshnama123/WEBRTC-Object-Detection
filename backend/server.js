@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,6 +18,9 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Store client sessions
 const clients = new Map();
+
+// Detection mode (can be 'wasm' or 'server')
+const MODE = process.env.DETECTION_MODE || 'wasm';
 
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
@@ -60,14 +64,69 @@ io.on('connection', (socket) => {
         }
     });
     
+    // Handle server-mode frame processing
+    socket.on('process-frame', async (data) => {
+        if (MODE === 'server') {
+            try {
+                const inference_ts = Date.now();
+                
+                // Simulate server-side detection (replace with actual ML inference)
+                const detections = await processFrameServerSide(data.imageData);
+                
+                const result = {
+                    frame_id: data.frame_id,
+                    capture_ts: data.capture_ts,
+                    recv_ts: data.recv_ts,
+                    inference_ts: inference_ts,
+                    detections: detections
+                };
+                
+                socket.emit('detection-result', result);
+            } catch (error) {
+                console.error('Server detection error:', error);
+            }
+        }
+    });
+    
+    // Handle benchmark commands
+    socket.on('start-benchmark', (duration) => {
+        console.log(`📊 Starting benchmark for ${duration} seconds`);
+        socket.emit('start-benchmark', duration);
+    });
+    
+    socket.on('save-metrics', (metrics) => {
+        console.log('💾 Saving metrics to metrics.json');
+        fs.writeFileSync(path.join(__dirname, '../metrics.json'), JSON.stringify(metrics, null, 2));
+        console.log('✅ Metrics saved successfully');
+    });
+    
     socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id);
         clients.delete(socket.id);
     });
 });
 
+// Simulate server-side object detection (replace with actual ML model)
+async function processFrameServerSide(imageData) {
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Mock detection results
+    return [
+        {
+            label: "person",
+            score: 0.85,
+            xmin: 0.1,
+            ymin: 0.1,
+            xmax: 0.8,
+            ymax: 0.9
+        }
+    ];
+}
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📊 Detection mode: ${MODE}`);
     console.log(`📱 For phone access, use your local IP or ngrok`);
 });

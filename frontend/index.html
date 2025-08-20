@@ -3,140 +3,431 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebRTC Object Detection</title>
+    <title>Real-time Object Detection | WebRTC AI Demo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        .container {
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
             max-width: 1200px;
             margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
         }
-        
-        .video-container {
-            position: relative;
-            display: inline-block;
-            background: #000;
-            border-radius: 10px;
-            overflow: hidden;
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #4f46e5;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-connecting {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .connection-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.1);
+        }
+
+        .connection-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+        }
+
+        .connection-title i {
+            margin-right: 10px;
+            color: #4f46e5;
+        }
+
+        .url-display {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            color: #475569;
+            word-break: break-all;
+            margin-bottom: 15px;
+        }
+
+        .connection-info {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .video-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .video-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.1);
+        }
+
+        .video-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 20px;
         }
-        
-        #localVideo, #remoteVideo {
-            width: 100%;
-            max-width: 640px;
-            height: auto;
-            display: block;
+
+        .video-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
         }
-        
+
+        .video-title i {
+            margin-right: 8px;
+            color: #ef4444;
+        }
+
+        .recording-dot {
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        #remoteVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         #overlay {
             position: absolute;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
             z-index: 10;
         }
-        
-        .metrics {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .metric-item {
-            display: inline-block;
-            margin-right: 30px;
-            padding: 10px 15px;
-            background: #007bff;
-            color: white;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        
-        .status {
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+
+        .video-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6b7280;
             text-align: center;
         }
-        
-        .status.loading {
-            background: #fff3cd;
-            color: #856404;
+
+        .video-placeholder i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
         }
-        
-        .status.ready {
-            background: #d4edda;
-            color: #155724;
+
+        .metrics-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.1);
         }
-        
-        .debug-info {
-            margin-top: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            font-size: 12px;
-            color: #666;
+
+        .metrics-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .metrics-header i {
+            margin-right: 8px;
+            color: #10b981;
+        }
+
+        .metrics-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e40af;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detection-info {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.1);
+        }
+
+        .detection-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .detection-header i {
+            margin-right: 8px;
+            color: #f59e0b;
+        }
+
+        .detection-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .detection-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+
+        .detection-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .detection-confidence {
+            font-size: 14px;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .no-detections {
+            text-align: center;
+            color: #9ca3af;
+            padding: 30px;
+            font-style: italic;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎯 Real-time WebRTC Object Detection</h1>
-        
-        <div id="qr-code"></div>
-        
-        <div class="status loading">
-            📡 Initializing connection...
-        </div>
-        
-        <div class="video-container">
-            <video id="localVideo" autoplay muted playsinline style="display: none;"></video>
-            <video id="remoteVideo" autoplay muted playsinline 
-                   style="width: 100%; max-width: 640px; height: auto; background: #222;"></video>
-            <canvas id="overlay"></canvas>
-        </div>
-        
-        <div class="debug-info">
-            <strong>Debug Info:</strong> If video doesn't appear, check browser console (F12) for errors.
-            Video should show your phone's camera stream with colored bounding boxes around detected objects.
-        </div>
-        
-        <div class="metrics">
-            <h3>📊 Live Metrics</h3>
-            <div class="metric-item">FPS: <span id="fps">0</span></div>
-            <div class="metric-item">Frames: <span id="frame-count">0</span></div>
-            <div class="metric-item">Detections: <span id="detections-count">0</span></div>
-            <div class="metric-item">Inference: <span id="latency">0</span>ms</div>
-        </div>
-        
-        <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 10px;">
-            <h4>🔧 Instructions:</h4>
-            <ol>
-                <li><strong>Connect Phone:</strong> Open the URL shown above on your phone's browser</li>
-                <li><strong>Allow Camera:</strong> Grant camera permissions when prompted</li>
-                <li><strong>See Results:</strong> Video should appear above with colored bounding boxes</li>
-                <li><strong>Test Objects:</strong> Point camera at people, bottles, phones, laptops, etc.</li>
-            </ol>
-            
-            <div style="margin-top: 15px; padding: 10px; background: #e8f4f8; border-radius: 5px;">
-                <strong>Troubleshooting:</strong>
-                <ul style="margin: 5px 0; padding-left: 20px;">
-                    <li>If no video appears, refresh both phone and laptop</li>
-                    <li>Check browser console (F12) for connection errors</li>
-                    <li>Make sure both devices are on same WiFi network</li>
-                    <li>Try clicking on the video area to force play</li>
-                </ul>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-eye"></i>
+                AI Object Detection
+            </div>
+            <div id="status-indicator" class="status-indicator status-connecting">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                Initializing...
             </div>
         </div>
     </div>
-    
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Connection Panel -->
+        <div id="connection-panel" class="connection-panel">
+            <div class="connection-title">
+                <i class="fas fa-mobile-alt"></i>
+                Connect Your Phone
+            </div>
+            <div id="qr-code"></div>
+        </div>
+
+        <!-- Video and Metrics Section -->
+        <div class="video-section">
+            <!-- Video Panel -->
+            <div class="video-panel">
+                <div class="video-header">
+                    <div class="video-title">
+                        <i class="fas fa-video"></i>
+                        Live Stream
+                    </div>
+                    <div id="recording-indicator" class="recording-dot" style="display: none;"></div>
+                </div>
+                
+                <div class="video-container">
+                    <video id="localVideo" autoplay muted playsinline style="display: none;"></video>
+                    <video id="remoteVideo" autoplay muted playsinline></video>
+                    <canvas id="overlay"></canvas>
+                    
+                    <div id="video-placeholder" class="video-placeholder">
+                        <i class="fas fa-camera"></i>
+                        <div>Waiting for phone connection...</div>
+                        <small style="margin-top: 10px; opacity: 0.7;">Open the URL above on your phone</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Panel -->
+            <div class="metrics-panel">
+                <div class="metrics-header">
+                    <i class="fas fa-chart-line"></i>
+                    Performance
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span id="fps" class="metric-value">0</span>
+                        <div class="metric-label">FPS</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <span id="latency" class="metric-value">0</span>
+                        <div class="metric-label">Latency (ms)</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <span id="detections-count" class="metric-value">0</span>
+                        <div class="metric-label">Objects</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <span id="frame-count" class="metric-value">0</span>
+                        <div class="metric-label">Frames</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detection Info -->
+        <div class="detection-info">
+            <div class="detection-header">
+                <i class="fas fa-search"></i>
+                Detected Objects
+            </div>
+            <div id="detection-list" class="detection-list">
+                <div class="no-detections">
+                    No objects detected yet. Point your phone camera at people, objects, or items around you.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Powered by TensorFlow.js and WebRTC | Real-time AI Object Detection Demo
+    </div>
+
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@latest"></script>

@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # WASM Mode (default)
+  webrtc-detection:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DETECTION_MODE=wasm
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm start
+
+  # Server Mode
+  webrtc-detection-server:
+    build: .
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - DETECTION_MODE=server
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm start
+    profiles: ["server"]
